@@ -1,0 +1,34 @@
+a = 2
+b = a + 3
+c = a + b
+c = a + b + 3
+yaz(c)
+c = a + b
+yaz(c)
+c = 20
+yaz(c)
+eger  45  == 50  :
+    yaz(a)
+mery 45 == 45:
+     yaz(b)
+degilse:
+    yaz("meryem")
+c = c * 2
+yaz(c)
+x = 3
+yaz(x)
+deneme
+m = "meryem"
+yaz("meryem")
+y = meryem
+x = bastir("x degiskenine deger giriniz:")
+yaz(x)
+z = degeral
+
+
+
+
+
+
+
+
