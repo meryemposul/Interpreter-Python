@@ -1,121 +1,131 @@
 import sys
+
 variables = {}
 
-def perform_assignment(line): # "=" Bulduğunda çalıştırılacak fonksiyon, satır parametresini alır ve satırdaki ifadeyi değerlendirme fonksiyonuna gönderir.
-    items = [item.strip() for item in line.split('=')] # "="in(varsa birden fazla "="in) taraflarını parçalar indexler.
-    variable_name = items[0].strip() # "="in sol taraftaki kısmı
-    expression = items[1].strip() # "="in sağ taraftaki kısmı
-    result = evaluate_expression(expression) # İfadeyi örneğin "c=a+b"yi değerlendirmek için(operatör var mı yok mu) değerlendirme fonksiyonuna gönderir.
-    if 'bastir' in expression: # derleyicinin kullanıcıdan input almasını sağlamak için
+def perform_assignment(line):
+    items = [item.strip() for item in line.split('=')]
+    variable_name = items[0].strip()
+    expression = items[1].strip()
+    result = evaluate_expression(expression)
+    if 'bastir' in expression:
         print_target = extract_value(expression, 'bastir')
         print(print_target)
-        user_input = input().strip() # kullanıcıdan girdi alır
-        variables[variable_name] = user_input # kullanıcıdan alınan girdiyi eşittirin solunda kalan değişkene atar.
-    elif result is not None: # Bir değer varsa eşitle
+        user_input = input().strip()
+        variables[variable_name] = user_input
+    elif result is not None:
         variables[variable_name] = result
 
 def evaluate_expression(expression):
-    expression = expression.replace(' ', '')  # Boşlukları kaldır
+    expression = expression.replace(' ', '')
     result = evaluate_addition_subtraction(expression)
     return result
 
 def evaluate_addition_subtraction(expression):
-    terms = expression.split('+')
+    terms = split_expression(expression, ['+', '-'])
     result = evaluate_multiplication_division(terms[0])
-    for i in range(1, len(terms)):
-        if '-' in terms[i]:
-            subtraction_terms = terms[i].split('-')
-            result += evaluate_multiplication_division(subtraction_terms[0])
-            for j in range(1, len(subtraction_terms)):
-                result -= evaluate_multiplication_division(subtraction_terms[j])
-        else:
+    i = 1
+    while i < len(terms):
+        operator = terms[i]
+        i += 1
+        if operator == '+':
             result += evaluate_multiplication_division(terms[i])
+        elif operator == '-':
+            result -= evaluate_multiplication_division(terms[i])
+        i += 1
     return result
 
-
-
-
 def evaluate_multiplication_division(term):
-    factors = term.split('*')
+    factors = split_expression(term, ['*', '/'])
     result = evaluate_factor(factors[0])
-    for i in range(1, len(factors)):
-        if '/' in factors[i]:
-            division_factors = factors[i].split('/')
-            result *= evaluate_factor(division_factors[0])
-            for j in range(1, len(division_factors)):
-                fractional = evaluate_factor(division_factors[j])
-                if fractional == 0:
-                    print("Sıfıra bölme hatası")
-                    return None
-                result /= fractional
-        else:
+    i = 1
+    while i < len(factors):
+        operator = factors[i]
+        i += 1
+        if operator == '*':
             result *= evaluate_factor(factors[i])
+        elif operator == '/':
+            fractional = evaluate_factor(factors[i])
+            if fractional == 0:
+                print("Sıfıra bölme hatası")
+                return None
+            result /= fractional
+        i += 1
     return result
 
 def evaluate_factor(factor):
     if factor in variables:
         return int(variables[factor])
     try:
-        if '(' in factor:  # Eğer faktör içinde parantez varsa, içindeki ifadeyi değerlendir.
-            inner_expression = factor[1:-1]  # Parantez içindeki ifadeyi alır.
-            return evaluate_expression(inner_expression)
         return int(factor)
     except ValueError:
         return None
 
-
-def execute_print(line): # İncelenen satırda "yaz" var ise çalışır.
+def execute_print(line):
     print_target = extract_value(line, 'yaz')
     print(print_target)
 
-def extract_value(text, command): # Komutu ifadede çıkartır ve ifadeyi çıkarmaya çalışır.
+def extract_value(text, command):
     text_list = text.split(command)
     result = ""
-    for item in text_list[1:]: # 1. indexten son indee kadar olan textlerin içinde item'i döndürür.
+    for item in text_list[1:]:
         value = extract_string_or_variable(item)
         result += str(value)
     return result
 
-def extract_string_or_variable( text): # Parantezlerin içindeki ifade string mi yoksa bir değişken mi tespit eder.
-    if text[0] == '(' and (text[1] == '"' or text[1] == "'"): # ilk index açık parantez ve ondan sonra gelen çift tırnak veya tek tırnak işaretiyse gir.
-        closing_char = text[1] # çift tırnak veya tek tırnakla başlıyorsa bitişi de aynı olmalı.
+def extract_string_or_variable(text):
+    if text[0] == '(' and (text[1] == '"' or text[1] == "'"):
+        closing_char = text[1]
         value = ""
-        index = 2 # Açık parantez ve tırnak işaretlerini atlayarak başlıyor.
+        index = 2
         while index < len(text):
-            if text[index] == closing_char and text[index + 1] == ")": # kapanış başlanılan tırnak işaretiyle aynı olmalı ve bir sonraki karakter kapalı parantez olmalı.
+            if text[index] == closing_char and text[index + 1] == ")":
                 break
             value += text[index]
             index += 1
         return value
-    elif text[0] == '(': # Sadece açık parantez ise girer bu şartın yukarıdakinden aşağıda olması önemli eğer bu şart yukarıda olsaydı hep bu şart dönerdi.
+    elif text[0] == '(':
         index = 1
         variable_name = ""
         while index < len(text):
             if text[index] == ')':
                 break
-            variable_name += text[index] # Hangi deişken olduğunu çıkardık.
+            variable_name += text[index]
             index += 1
         variable_name = variable_name.strip()
-        return variables.get(variable_name, '') # Parantezin içindekinin değişken olduğunu bulup değeriyle geri dönderdik.
+        return variables.get(variable_name, '')
     return ""
 
-def find_equality(line): # Eşitlik veya yazdırma durumu kontrolü yapılır.
-    if '=' in line: # Eşitlik bulunduğunda
+def find_equality(line):
+    if '=' in line:
         perform_assignment(line)
-    elif 'yaz' in line: # "yaz" komutu bulunduğunda.
+    elif 'yaz' in line:
         execute_print(line)
     else:
         print("Bilinmeyen ifade: ", line)
 
-def get_from_file(file_name): # Dosya okunur.
+def get_from_file(file_name):
     with open(file_name) as file_object:
         return file_object.read()
 
-def get_lines(file_name): # Dosya okunması ve satırların tek tek ayrılması yapılır.
-    text = get_from_file(file_name) # Dosya okuma fonksiyonunu çalıştırır metinler "text" değişkenine atanır.
+def get_lines(file_name):
+    text = get_from_file(file_name)
     lines = text.split("\n")
     for line in lines:
-        find_equality(line) # Eşitlik veya yazdırma durumu kontrolü ve işlemlerinin başlatılması için her satırı tek tek gönderilir.
+        find_equality(line)
+
+
+def split_expression(expression, operators):
+    current_term = ""
+    terms = []
+    for char in expression:
+        if char in operators:
+            terms.append(current_term)
+            terms.append(char)
+            current_term = ""
+        else:
+            current_term += char
+    terms.append(current_term)
+    return terms
 
 
 if len(sys.argv) < 2:
@@ -130,6 +140,3 @@ else:
                 find_equality(line)
     except FileNotFoundError:
         print(f"{dosya_adi} adlı dosya bulunamadı.")
-
-
-
